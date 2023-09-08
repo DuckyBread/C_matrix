@@ -1,0 +1,595 @@
+#include <check.h>
+#include <math.h>
+#include <stdio.h>
+
+#include "my_matrix.h"
+
+#test my_create_matrix_1
+    matrix_t A;
+    int check = my_create_matrix(1, 1, &A);
+    my_remove_matrix(&A);
+    ck_assert_int_eq(check, OK);
+
+    check = my_create_matrix(4, 2, &A);
+    my_remove_matrix(&A);
+    ck_assert_int_eq(check, OK);
+
+    check = my_create_matrix(-4, 2, &A);
+    ck_assert_int_eq(check, ERROR_MATRIX);
+
+    check = my_create_matrix(4, -2, &A);
+    ck_assert_int_eq(check, ERROR_MATRIX);
+
+    check = my_create_matrix(4, 0, &A);
+    ck_assert_int_eq(check, ERROR_MATRIX);
+
+    check = my_create_matrix(0, 4, &A);
+    ck_assert_int_eq(check, ERROR_MATRIX);
+
+#test my_eq_matrix_1
+    matrix_t A;
+    matrix_t B;
+
+    my_create_matrix(1, 3, &A);
+    my_create_matrix(1, 3, &B);
+    int check = my_eq_matrix(&A, &B);
+    ck_assert_int_eq(check, SUCCESS);
+    my_remove_matrix(&A);
+    my_remove_matrix(&B);
+
+#test my_eq_matrix_2
+    matrix_t A;
+    matrix_t B;
+    my_create_matrix(3, 1, &A);
+    my_create_matrix(1, 3, &B);
+    int check = my_eq_matrix(&A, &B);
+    ck_assert_int_eq(check, FAILURE);
+    my_remove_matrix(&A);
+    my_remove_matrix(&B);
+
+#test my_eq_matrix_3
+    matrix_t A;
+    matrix_t B;
+    my_create_matrix(0, 1, &A);
+    my_create_matrix(0, 1, &B);
+    int check = my_eq_matrix(&A, &B);
+    ck_assert_int_eq(check, FAILURE);
+    my_remove_matrix(&A);
+    my_remove_matrix(&B);
+
+#test my_eq_matrix_4
+    matrix_t A;
+    matrix_t B;
+    my_create_matrix(3, 3, &A);
+    my_create_matrix(3, 3, &B);
+    A.matrix[0][0] = 0.1;
+    A.matrix[0][1] = 0.12345678;
+    A.matrix[0][2] = 1.1;
+    A.matrix[1][0] = 0.3;
+    A.matrix[1][1] = 0.1;
+    A.matrix[1][2] = 0.1;
+    A.matrix[2][0] = 0.1;
+    A.matrix[2][1] = 0.1;
+    A.matrix[2][2] = 0.1;
+    B.matrix[0][0] = 0.1;
+    B.matrix[0][1] = 0.1234567;
+    B.matrix[0][2] = 1.1;
+    B.matrix[1][0] = 0.3;
+    B.matrix[1][1] = 0.1;
+    B.matrix[1][2] = 0.1;
+    B.matrix[2][0] = 0.1;
+    B.matrix[2][1] = 0.1;
+    B.matrix[2][2] = 0.1;
+    int check = my_eq_matrix(&A, &B);
+    ck_assert_int_eq(check, SUCCESS);
+    my_remove_matrix(&A);
+    my_remove_matrix(&B);
+
+#test my_eq_matrix_5
+    matrix_t A;
+    matrix_t B;
+    my_create_matrix(3, 3, &A);
+    my_create_matrix(3, 3, &B);
+    A.matrix[0][0] = 0.1;
+    A.matrix[0][1] = 0.12345678;
+    A.matrix[0][2] = 1.1;
+    A.matrix[1][0] = 0.3;
+    A.matrix[1][1] = 66666666660.10101;
+    A.matrix[1][2] = 0.1;
+    A.matrix[2][0] = 0.1;
+    A.matrix[2][1] = 53453454357.1;
+    A.matrix[2][2] = 0.1;
+    B.matrix[0][0] = 0.1;
+    B.matrix[0][1] = 0.1234567;
+    B.matrix[0][2] = 1.1;
+    B.matrix[1][0] = 0.3;
+    B.matrix[1][1] = 66666666660.10101;
+    B.matrix[1][2] = 0.1;
+    B.matrix[2][0] = 0.1;
+    B.matrix[2][1] = 53453454357.1;
+    B.matrix[2][2] = 0.1;
+    int check = my_eq_matrix(&A, &B);
+    ck_assert_int_eq(check, SUCCESS);
+    my_remove_matrix(&A);
+    my_remove_matrix(&B);
+
+#test my_eq_matrix_6
+    matrix_t A;
+    matrix_t B;
+    my_create_matrix(2, 2, &A);
+    my_create_matrix(2, 2, &B);
+    A.matrix[0][0] = -0.13232;
+    A.matrix[0][1] = 0.1234567854354;
+    A.matrix[1][0] = 0.3;
+    A.matrix[1][1] = -23;
+    B.matrix[0][0] = -0.13232;
+    B.matrix[0][1] = 0.12345678123;
+    B.matrix[1][0] = 0.3;
+    B.matrix[1][1] = -23;
+    int check = my_eq_matrix(&A, &B);
+    ck_assert_int_eq(check, SUCCESS);
+    my_remove_matrix(&A);
+    my_remove_matrix(&B);
+
+#test my_sum_matrix_1
+    matrix_t A;
+    matrix_t B;
+    matrix_t C;
+    my_create_matrix(2, 1, &A);
+    my_create_matrix(2, 1, &B);
+    double test[] = {5.0, -1.003};
+    A.matrix[0][0] = 1.0;
+    A.matrix[1][0] = 2.23;
+    B.matrix[0][0] = 4.0;
+    B.matrix[1][0] = -3.233;
+    int check = my_sum_matrix(&A, &B, &C);
+    for (int i = 0, k = 0; i < C.rows; i++)
+    for (int j = 0; j < C.columns; j++) {
+        ck_assert_int_eq(fabs(C.matrix[i][j] - test[k]) < 1e-6, 1);
+        k++;
+    }
+    ck_assert_int_eq(check, OK);
+    my_remove_matrix(&A);
+    my_remove_matrix(&B);
+    my_remove_matrix(&C);
+
+#test my_sum_matrix_2
+  matrix_t A;
+  matrix_t B;
+  matrix_t C;
+  my_create_matrix(2, 2, &A);
+  my_create_matrix(2, 2, &B);
+  double test[] = {0.0, 0.0, 0.0, 0.0};
+  int check = my_sum_matrix(&A, &B, &C);
+  for (int i = 0, k = 0; i < C.rows; i++)
+    for (int j = 0; j < C.columns; j++) {
+      ck_assert_int_eq(fabs(C.matrix[i][j] - test[k]) < 1e-6, 1);
+      k++;
+    }
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+  my_remove_matrix(&B);
+  my_remove_matrix(&C);
+
+#test my_sum_matrix_3
+  matrix_t A;
+  matrix_t B;
+  matrix_t C;
+  my_create_matrix(2, 2, &A);
+  my_create_matrix(2, 3, &B);
+  int check = my_sum_matrix(&A, &B, &C);
+  ck_assert_int_eq(check, ERROR_CALCULATION);
+  my_remove_matrix(&A);
+  my_remove_matrix(&B);
+
+#test my_sum_matrix_4
+  matrix_t A;
+  matrix_t C;
+  matrix_t null;
+  null.columns = 0;
+  null.rows = 0;
+  null.matrix = NULL;
+  my_create_matrix(2, 2, &A);
+  int check = my_sum_matrix(&A, &null, &C);
+  ck_assert_int_eq(check, ERROR_MATRIX);
+  my_remove_matrix(&A);
+  my_remove_matrix(&null);
+
+#test my_sub_matrix_1
+  matrix_t A;
+  matrix_t B;
+  matrix_t C;
+  my_create_matrix(2, 2, &A);
+  my_create_matrix(2, 2, &B);
+  double test[] = {1.0, 0.0, 0.0, 1.0};
+  A.matrix[0][0] = 1.0;
+  A.matrix[0][1] = 1.0;
+  A.matrix[1][0] = 2.0;
+  A.matrix[1][1] = 65.234;
+  B.matrix[0][0] = 0.0;
+  B.matrix[0][1] = 1.0;
+  B.matrix[1][0] = 2.0;
+  B.matrix[1][1] = 64.234;
+  int check = my_sub_matrix(&A, &B, &C);
+  for (int i = 0, k = 0; i < C.rows; i++)
+    for (int j = 0; j < C.columns; j++) {
+      ck_assert_int_eq(fabs(C.matrix[i][j] - test[k]) < 1e-6, 1);
+      k++;
+    }
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+  my_remove_matrix(&B);
+  my_remove_matrix(&C);
+
+#test my_sub_matrix_2
+  matrix_t A;
+  matrix_t B;
+  matrix_t C;
+  my_create_matrix(2, 3, &A);
+  my_create_matrix(2, 2, &B);
+  A.matrix[0][0] = 1.0;
+  A.matrix[0][1] = 3.0;
+  A.matrix[0][2] = 5.0;
+  A.matrix[1][0] = 29.0;
+  A.matrix[1][1] = 2143.0;
+  A.matrix[1][2] = 2.0;
+  B.matrix[0][0] = 0.0;
+  B.matrix[0][1] = -3.0;
+  B.matrix[1][0] = -5.0;
+  B.matrix[1][1] = -1.0;
+  int check = my_sub_matrix(&A, &B, &C);
+  ck_assert_int_eq(check, ERROR_CALCULATION);
+  my_remove_matrix(&A);
+  my_remove_matrix(&B);
+
+#test my_sub_matrix_3
+  matrix_t A;
+  matrix_t C;
+  matrix_t null;
+  null.columns = 0;
+  null.rows = 0;
+  null.matrix = NULL;
+  my_create_matrix(2, 3, &A);
+  A.matrix[0][0] = 0.0;
+  A.matrix[0][1] = -3.0;
+  A.matrix[0][2] = -3.0;
+  A.matrix[1][0] = -5.0;
+  A.matrix[1][1] = -1.0;
+  A.matrix[1][2] = -1.0;
+  int check = my_sub_matrix(&A, &null, &C);
+  ck_assert_int_eq(check, ERROR_MATRIX);
+  my_remove_matrix(&A);
+  my_remove_matrix(&null);
+
+#test my_mult_number_1
+  matrix_t C;
+  matrix_t null;
+  null.columns = 0;
+  null.rows = 0;
+  null.matrix = NULL;
+  int check = my_mult_number(&null, 3, &C);
+  ck_assert_int_eq(check, ERROR_MATRIX);
+  my_remove_matrix(&null);
+
+#test my_mult_number_2
+  matrix_t A;
+  matrix_t C;
+  my_create_matrix(2, 2, &A);
+  double test[] = {12.12, 38.9052, -60.6, 25.6944};
+  A.matrix[0][0] = 1.0;
+  A.matrix[0][1] = 3.21;
+  A.matrix[1][0] = -5.0;
+  A.matrix[1][1] = 2.12;
+  int check = my_mult_number(&A, 12.12, &C);
+  for (int i = 0, k = 0; i < C.rows; i++)
+    for (int j = 0; j < C.columns; j++) {
+      ck_assert_int_eq(fabs(C.matrix[i][j] - test[k]) < 1e-6, 1);
+      k++;
+    }
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+  my_remove_matrix(&C);
+
+#test my_mult_number_3
+  matrix_t A;
+  matrix_t C;
+  my_create_matrix(2, 2, &A);
+  A.matrix[0][0] = 1.0;
+  A.matrix[0][1] = 3.21;
+  A.matrix[1][0] = -5.0;
+  A.matrix[1][1] = 2.12;
+  int check = my_mult_number(&A, 1, &C);
+  int check1 = my_eq_matrix(&A, &C);
+  ck_assert_int_eq(check, OK);
+  ck_assert_int_eq(check1, SUCCESS);
+  my_remove_matrix(&A);
+  my_remove_matrix(&C);
+
+#test my_mult_matrix_1
+  matrix_t A;
+  matrix_t B;
+  matrix_t C;
+  my_create_matrix(2, 3, &A);
+  my_create_matrix(2, 2, &B);
+  A.matrix[0][1] = 23;
+  A.matrix[1][2] = 1;
+  B.matrix[0][1] = 12;
+  B.matrix[1][1] = 23;
+  int check = my_mult_matrix(&A, &B, &C);
+  ck_assert_int_eq(check, ERROR_CALCULATION);
+  my_remove_matrix(&A);
+  my_remove_matrix(&B);
+  my_remove_matrix(&C);
+
+#test my_mult_matrix_2
+  matrix_t A;
+  matrix_t B;
+  matrix_t C;
+  my_create_matrix(2, 3, &A);
+  my_create_matrix(3, 2, &B);
+  A.matrix[0][1] = 23;
+  A.matrix[1][2] = 1;
+  B.matrix[1][1] = 23;
+  B.matrix[0][1] = 12;
+  int check = my_mult_matrix(&A, &B, &C);
+  double test[] = {0, 529, 0, 0};
+  for (int i = 0, k = 0; i < C.rows; i++)
+    for (int j = 0; j < C.columns; j++) {
+      ck_assert_int_eq(fabs(C.matrix[i][j] - test[k]) < 1e-6, 1);
+      k++;
+    }
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+  my_remove_matrix(&B);
+  my_remove_matrix(&C);
+
+#test my_mult_matrix_3
+  matrix_t A;
+  matrix_t B;
+  matrix_t C;
+  my_create_matrix(3, 3, &A);
+  my_create_matrix(3, 3, &B);
+  A.matrix[0][1] = 23;
+  A.matrix[1][1] = 32;
+  B.matrix[0][1] = 1;
+  B.matrix[1][1] = 1;
+  int check = my_mult_matrix(&A, &B, &C);
+  int check1 = my_eq_matrix(&A, &C);
+  ck_assert_int_eq(check, OK);
+  ck_assert_int_eq(check1, SUCCESS);
+  my_remove_matrix(&A);
+  my_remove_matrix(&B);
+  my_remove_matrix(&C);
+
+#test my_mult_matrix_4
+  matrix_t A;
+  matrix_t C;
+  matrix_t null;
+  null.columns = 0;
+  null.rows = 0;
+  null.matrix = NULL;
+  my_create_matrix(3, 2, &A);
+  int check = my_mult_matrix(&A, &null, &C);
+  ck_assert_int_eq(check, ERROR_MATRIX);
+  my_remove_matrix(&A);
+  my_remove_matrix(&null);
+
+#test my_transpose_1
+  matrix_t null;
+  null.columns = 0;
+  null.rows = 0;
+  null.matrix = NULL;
+  matrix_t C;
+  int check = my_transpose(&null, &C);
+  ck_assert_int_eq(check, ERROR_MATRIX);
+  my_remove_matrix(&null);
+
+#test my_transpose_2
+  matrix_t A;
+  matrix_t B;
+  matrix_t C;
+  my_create_matrix(3, 2, &A);
+  my_create_matrix(2, 3, &B);
+  A.matrix[0][0] = 1;
+  A.matrix[0][1] = 4;
+  A.matrix[1][0] = 2;
+  A.matrix[1][1] = 5;
+  A.matrix[2][0] = 3;
+  A.matrix[2][1] = 6;
+  B.matrix[0][0] = 1;
+  B.matrix[0][1] = 2;
+  B.matrix[0][2] = 3;
+  B.matrix[1][0] = 4;
+  B.matrix[1][1] = 5;
+  B.matrix[1][2] = 6;
+  int check = my_transpose(&A, &C);
+  int check1 = my_eq_matrix(&C, &B);
+  ck_assert_int_eq(check1, SUCCESS);
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+  my_remove_matrix(&B);
+  my_remove_matrix(&C);
+
+#test my_calc_complements_1
+  matrix_t A;
+  matrix_t C;
+  my_create_matrix(2, 3, &A);
+  A.matrix[0][0] = 1.24;
+  A.matrix[0][1] = 23;
+  A.matrix[0][2] = 3;
+  A.matrix[1][0] = 111;
+  A.matrix[1][1] = 0;
+  A.matrix[1][2] = 2;
+  int check = my_calc_complements(&A, &C);
+  ck_assert_int_eq(check, ERROR_CALCULATION);
+  my_remove_matrix(&A);
+  if (C.matrix) my_remove_matrix(&C);
+
+#test my_calc_complements_2
+  matrix_t A;
+  matrix_t C;
+  my_create_matrix(1, 1, &A);
+  A.matrix[0][0] = 1.0;
+  int check = my_calc_complements(&A, &C);
+  double test = 1.0;
+  ck_assert_int_eq(check, OK);
+  ck_assert_int_eq(fabs(C.matrix[0][0] - test) < 1e-6, 1);
+  my_remove_matrix(&A);
+
+#test my_calc_complements_3
+  matrix_t A;
+  matrix_t C;
+  my_create_matrix(3, 3, &A);
+  A.matrix[0][0] = 1;
+  A.matrix[0][1] = 2;
+  A.matrix[0][2] = 3;
+  A.matrix[1][0] = 0;
+  A.matrix[1][1] = 4;
+  A.matrix[1][2] = 2;
+  A.matrix[2][0] = 5;
+  A.matrix[2][1] = 2;
+  A.matrix[2][2] = 1;
+  int check = my_calc_complements(&A, &C);
+  double test[] = {0, 10, -20, 4, -14, 8, -8, -2, 4};
+  for (int i = 0, k = 0; i < C.rows; i++)
+    for (int j = 0; j < C.columns; j++) {
+      ck_assert_int_eq(fabs(C.matrix[i][j] - test[k]) < 1e-6, 1);
+      k++;
+    }
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+  my_remove_matrix(&C);
+
+#test my_calc_complements_4
+  matrix_t C;
+  matrix_t null;
+  null.columns = 0;
+  null.rows = 0;
+  null.matrix = NULL;
+  int check = my_calc_complements(&null, &C);
+  ck_assert_int_eq(check, ERROR_MATRIX);
+  my_remove_matrix(&null);
+
+#test my_calc_complements_5
+  matrix_t A;
+  matrix_t C;
+  my_create_matrix(4, 4, &A);
+  A.matrix[0][0] = 1;
+  A.matrix[0][1] = 2;
+  A.matrix[0][2] = 3;
+  A.matrix[0][3] = 4;
+
+  A.matrix[1][0] = 0;
+  A.matrix[1][1] = 4;
+  A.matrix[1][2] = 2;
+  A.matrix[1][3] = 3;
+
+  A.matrix[2][0] = 5;
+  A.matrix[2][1] = 2;
+  A.matrix[2][2] = 1;
+  A.matrix[2][3] = 3;
+
+  A.matrix[3][0] = -1;
+  A.matrix[3][1] = 2;
+  A.matrix[3][2] = -3;
+  A.matrix[3][3] = 4;
+  int check = my_calc_complements(&A, &C);
+  double test[] = {24,  88,  -56, -80, 12, -112, -4, 56,
+                   -60, -16, 20,  8,   12, 8,    44, -40};
+  for (int i = 0, k = 0; i < C.rows; i++)
+    for (int j = 0; j < C.columns; j++) {
+      ck_assert_int_eq(fabs(C.matrix[i][j] - test[k]) < 1e-6, 1);
+      k++;
+    }
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+  my_remove_matrix(&C);
+
+#test my_determinant_1
+  matrix_t A;
+  double det;
+  my_create_matrix(1, 1, &A);
+  A.matrix[0][0] = 12.3451;
+  int check = my_determinant(&A, &det);
+  double test = 12.3451;
+  ck_assert_int_eq(fabs(det - test) < 1e-6, 1);
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+
+#test my_determinant_2
+  double det;
+  matrix_t null;
+  null.columns = 0;
+  null.rows = 0;
+  null.matrix = NULL;
+  int check = my_determinant(&null, &det);
+  ck_assert_int_eq(check, ERROR_MATRIX);
+  my_remove_matrix(&null);
+
+#test my_determinant_3
+  matrix_t A;
+  double det;
+  my_create_matrix(2, 3, &A);
+  A.matrix[0][0] = 1.24;
+  A.matrix[0][1] = 23;
+  A.matrix[0][2] = 3;
+  A.matrix[1][0] = 111;
+  A.matrix[1][1] = 0;
+  A.matrix[1][2] = 2;
+  int check = my_determinant(&A, &det);
+  ck_assert_int_eq(check, ERROR_CALCULATION);
+  my_remove_matrix(&A);
+
+#test my_determinant_4
+  matrix_t A;
+  double det;
+  my_create_matrix(3, 3, &A);
+  A.matrix[0][0] = 1.24;
+  A.matrix[0][1] = 23;
+  A.matrix[0][2] = 3;
+  A.matrix[1][0] = 111;
+  A.matrix[1][1] = 0;
+  A.matrix[1][2] = 2;
+  A.matrix[2][0] = 111;
+  A.matrix[2][1] = 0;
+  A.matrix[2][2] = 2;
+  int check = my_determinant(&A, &det);
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+
+#test my_inverse_matrix_1
+  matrix_t null;
+  null.columns = 0;
+  null.rows = 0;
+  null.matrix = NULL;
+  matrix_t C;
+  int check = my_inverse_matrix(&null, &C);
+  ck_assert_int_eq(check, ERROR_MATRIX);
+  my_remove_matrix(&null);
+
+#test my_inverse_matrix_2
+  matrix_t A;
+  matrix_t C;
+  my_create_matrix(1, 1, &A);
+  int check = my_inverse_matrix(&A, &C);
+  ck_assert_int_eq(check, ERROR_CALCULATION);
+  my_remove_matrix(&A);
+
+#test my_inverse_matrix_3
+  matrix_t A;
+  matrix_t C;
+  my_create_matrix(2, 2, &A);
+  A.matrix[0][0] = 7.589;
+  A.matrix[0][1] = 59.1;
+  A.matrix[1][0] = 26.35;
+  A.matrix[1][1] = 75.17;
+  int check = my_inverse_matrix(&A, &C);
+  double test[] = {-0.076173, 0.059889, 0.026701, -0.00769};
+  for (int i = 0, k = 0; i < C.rows; i++)
+    for (int j = 0; j < C.columns; j++) {
+      ck_assert_int_eq(fabs(C.matrix[i][j] - test[k]) < 1e-6, 1);
+      k++;
+    }
+  ck_assert_int_eq(check, OK);
+  my_remove_matrix(&A);
+  my_remove_matrix(&C);
